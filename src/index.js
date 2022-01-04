@@ -24,7 +24,7 @@ application.get("/v1/user/logout/:id", (req, res) => {
             res.status(500).end();
             return;
         }
-        console.log(req.params.id);
+        // console.log(req.params.id);
         const sql = `UPDATE TB_USER SET \`login\`=NULL WHERE \`identity\`=? AND \`login\` IS NOT NULL`;
         const params = [req.params.id];
 
@@ -34,7 +34,7 @@ application.get("/v1/user/logout/:id", (req, res) => {
                 res.status(500).end();
                 return;
             }
-            console.log(result);
+            // console.log(result);
             if(result.changedRows === 1) {
                 res.send("ok");
             } else {
@@ -51,7 +51,7 @@ application.get("/v1/user/login/:id", (req, res) => {
             res.status(500).end();
             return;
         }
-        console.log(req.params.id);
+        // console.log(req.params.id);
         const sql = `UPDATE TB_USER SET \`login\`=CURRENT_TIMESTAMP() WHERE \`identity\`=? AND \`login\` IS NULL`;
         const params = [req.params.id];
 
@@ -61,8 +61,9 @@ application.get("/v1/user/login/:id", (req, res) => {
                 res.status(500).end();
                 return;
             }
-            console.log(result);
+            // console.log(result);
             if(result.changedRows === 1) {
+                websocketServer.broadcast(JSON.stringify({type: 'refresh'}));
                 res.send("ok");
             } else {
                 res.status(500).end();
@@ -138,11 +139,8 @@ LEFT JOIN TB_HISTORY P
 ON (U.id = P.userid AND P.type = 1)
 LEFT JOIN TB_HISTORY C 
 ON (C.type = 0 AND U.id = C.userid)
-ORDER BY U.id DESC
-LIMIT ?, ?`;
-        // console.log(sql);
-
-        // console.log(2);
+WHERE U.login IS NOT NULL
+ORDER BY U.login ASC`
         const params = [req.query.offset, req.query.limit];
 
         connection.query(sql, params, (error, result) => {
